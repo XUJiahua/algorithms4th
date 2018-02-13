@@ -4,11 +4,13 @@ import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 public class Percolation {
     private final int n;
     private final WeightedQuickUnionUF uf;
+    private final WeightedQuickUnionUF uf2;
     // blocked -> false, open -> true
     private boolean[] matrix;
     private int openedSites;
 
     private final int virtualTop;
+    private final int virtualBottom;
 
     // create n-by-n grid, with all sites blocked
     public Percolation(int n) {
@@ -18,8 +20,10 @@ public class Percolation {
 
         this.n = n;
         this.uf = new WeightedQuickUnionUF(n * n + 2);
+        this.uf2 = new WeightedQuickUnionUF(n * n + 1);
         this.matrix = new boolean[n * n];
         this.virtualTop = n * n;
+        this.virtualBottom = n * n + 1;
     }
 
     // open site (row, col) if it is not open already
@@ -31,24 +35,30 @@ public class Percolation {
 
         if (!this.matrix[row * this.n + col]) {
             this.matrix[row * this.n + col] = true;
+            this.openedSites++;
 
             if (row == 0) {
                 uf.union(row * this.n + col, virtualTop);
+                uf2.union(row * this.n + col, virtualTop);
             }
-
-            this.openedSites++;
-
+            if (row == n - 1) {
+                uf.union(row * this.n + col, virtualBottom);
+            }
             if (row > 0 && this.matrix[(row - 1) * this.n + col]) {
                 uf.union(row * this.n + col, (row - 1) * this.n + col);
+                uf2.union(row * this.n + col, (row - 1) * this.n + col);
             }
             if (row < n - 1 && this.matrix[(row + 1) * this.n + col]) {
                 uf.union(row * this.n + col, (row + 1) * this.n + col);
+                uf2.union(row * this.n + col, (row + 1) * this.n + col);
             }
             if (col > 0 && this.matrix[row * this.n + col - 1]) {
                 uf.union(row * this.n + col, row * this.n + col - 1);
+                uf2.union(row * this.n + col, row * this.n + col - 1);
             }
             if (col < n - 1 && this.matrix[row * this.n + col + 1]) {
                 uf.union(row * this.n + col, row * this.n + col + 1);
+                uf2.union(row * this.n + col, row * this.n + col + 1);
             }
         }
     }
@@ -69,7 +79,7 @@ public class Percolation {
             row--;
             col--;
 
-            return this.uf.connected(virtualTop, row * this.n + col);
+            return this.uf2.connected(virtualTop, row * this.n + col);
         } else {
             return false;
         }
@@ -82,12 +92,7 @@ public class Percolation {
 
     // does the system percolate?
     public boolean percolates() {
-        for (int i = 0; i < n; i++) {
-            if (this.uf.connected(virtualTop, (n - 1) * n + i)) {
-                return true;
-            }
-        }
-        return false;
+        return this.uf.connected(virtualTop, virtualBottom);
     }
 
     private void validate(int row, int col) {
