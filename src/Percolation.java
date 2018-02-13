@@ -8,6 +8,9 @@ public class Percolation {
     private boolean[] matrix;
     private int openedSites;
 
+    private boolean virtualTopAdded;
+    private boolean virtualBottomAdded;
+
     // create n-by-n grid, with all sites blocked
     public Percolation(int n) {
         if (n <= 0) {
@@ -16,14 +19,29 @@ public class Percolation {
 
         this.n = n;
         this.uf = new WeightedQuickUnionUF(n * n + 2);
+        this.matrix = new boolean[n * n];
+    }
+    private void addVirtualTop() {
+        if (virtualTopAdded) {
+            return;
+        }
         for (int i = 0; i < n; i++) {
             // top row
             this.uf.union(n * n, i);
+        }
+        virtualTopAdded = true;
+    }
+
+    private void addVirtualBottom() {
+        if (virtualBottomAdded) {
+            return;
+        }
+
+        for (int i = 0; i < n; i++) {
             // bottom row
             this.uf.union(n * n + 1, (n - 1) * n + i);
         }
-
-        this.matrix = new boolean[n * n];
+        virtualBottomAdded = true;
     }
 
     // open site (row, col) if it is not open already
@@ -35,6 +53,13 @@ public class Percolation {
 
         if (!this.matrix[row * this.n + col]) {
             this.matrix[row * this.n + col] = true;
+            if (row == 0) {
+                addVirtualTop();
+            }
+            if (row == this.n - 1) {
+                addVirtualBottom();
+            }
+
             this.openedSites++;
 
             if (row > 0 && this.matrix[(row - 1) * this.n + col]) {
