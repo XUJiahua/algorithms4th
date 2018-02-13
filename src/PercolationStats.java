@@ -6,6 +6,7 @@ public class PercolationStats {
     private final double[] data;
     private final int trials;
     private double mean = -1;
+    private double stddev = -1;
 
     // perform trials independent experiments on an n-by-n grid
     public PercolationStats(int n, int trials) {
@@ -41,22 +42,25 @@ public class PercolationStats {
 
     // sample standard deviation of percolation threshold
     public double stddev() {
-        return StdStats.stddev(this.data);
+        if (this.stddev < 0) {
+            this.stddev = StdStats.stddev(this.data);
+        }
+        return this.stddev;
     }
 
     // low  endpoint of 95% confidence interval
     public double confidenceLo() {
-        return mean() - MAGIC / Math.sqrt(trials);
+        return mean() - MAGIC * stddev() / Math.sqrt(trials);
     }
 
     // high endpoint of 95% confidence interval
     public double confidenceHi() {
-        return mean() + MAGIC / Math.sqrt(trials);
+        return mean() + MAGIC * stddev() / Math.sqrt(trials);
     }
 
     // test client (described below)
     public static void main(String[] args) {
-        PercolationStats stats = new PercolationStats(200, 100);
+        PercolationStats stats = new PercolationStats(20, 10);
         System.out.println("mean                    = " + stats.mean());
         System.out.println("stddev                  = " + stats.stddev());
         System.out.println("95% confidence interval = [" + stats.confidenceLo() + ", " + stats.confidenceHi() + "]");
