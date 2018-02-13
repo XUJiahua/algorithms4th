@@ -8,8 +8,7 @@ public class Percolation {
     private boolean[] matrix;
     private int openedSites;
 
-    private boolean virtualTopAdded;
-    private boolean virtualBottomAdded;
+    private final int virtualTop;
 
     // create n-by-n grid, with all sites blocked
     public Percolation(int n) {
@@ -20,28 +19,7 @@ public class Percolation {
         this.n = n;
         this.uf = new WeightedQuickUnionUF(n * n + 2);
         this.matrix = new boolean[n * n];
-    }
-    private void addVirtualTop() {
-        if (virtualTopAdded) {
-            return;
-        }
-        for (int i = 0; i < n; i++) {
-            // top row
-            this.uf.union(n * n, i);
-        }
-        virtualTopAdded = true;
-    }
-
-    private void addVirtualBottom() {
-        if (virtualBottomAdded) {
-            return;
-        }
-
-        for (int i = 0; i < n; i++) {
-            // bottom row
-            this.uf.union(n * n + 1, (n - 1) * n + i);
-        }
-        virtualBottomAdded = true;
+        this.virtualTop = n * n;
     }
 
     // open site (row, col) if it is not open already
@@ -53,11 +31,9 @@ public class Percolation {
 
         if (!this.matrix[row * this.n + col]) {
             this.matrix[row * this.n + col] = true;
+
             if (row == 0) {
-                addVirtualTop();
-            }
-            if (row == this.n - 1) {
-                addVirtualBottom();
+                uf.union(row * this.n + col, virtualTop);
             }
 
             this.openedSites++;
@@ -93,7 +69,7 @@ public class Percolation {
             row--;
             col--;
 
-            return this.uf.connected(n * n, row * this.n + col);
+            return this.uf.connected(virtualTop, row * this.n + col);
         } else {
             return false;
         }
@@ -106,13 +82,29 @@ public class Percolation {
 
     // does the system percolate?
     public boolean percolates() {
-        return this.uf.connected(n * n, n * n + 1);
+        for (int i = 0; i < n; i++) {
+            if (this.uf.connected(virtualTop, (n - 1) * n + i)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validate(int row, int col) {
         if (row < 1 || row > this.n || col < 1 || col > this.n) {
             throw new IllegalArgumentException("index is not between 1 and " + this.n);
         }
+    }
+
+    private void printMatrix() {
+        System.out.println();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                System.out.print(matrix[i * n + j] ? 1 : 0);
+            }
+            System.out.println();
+        }
+        System.out.println();
     }
 
     // test client (optional)
